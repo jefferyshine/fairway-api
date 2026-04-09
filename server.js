@@ -16,10 +16,32 @@ app.get("/geocode", async (req, res) => {
 
 app.get("/nearbysearch", async (req, res) => {
   const { lat, lng, radius, keyword } = req.query;
-  const params = new URLSearchParams({ location: `${lat},${lng}`, radius: radius || "50000", type: "golf_course", keyword: keyword || "golf course", key: KEY });
+  const params = new URLSearchParams({ 
+    location: `${lat},${lng}`, 
+    radius: radius || "50000", 
+    type: "golf_course", 
+    keyword: keyword || "golf course", 
+    key: KEY 
+  });
   const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?${params}`;
   const r = await fetch(url);
-  res.json(await r.json());
+  const data = await r.json();
+  
+  // Add distance to each result
+  const results = (data.results || []).map(place => {
+    const pLat = place.geometry.location.lat;
+    const pLng = place.geometry.location.lng;
+    const R = 3958.8;
+    const dLat = (pLat - parseFloat(lat)) * Math.PI / 180;
+    const dLng = (pLng - parseFloat(lng)) * Math.PI / 180;
+    const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+      Math.cos(parseFloat(lat) * Math.PI/180) * Math.cos(pLat * Math.PI/180) *
+      Math.sin(dLng/2) * Math.sin(dLng/2);
+    const distance = R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+    return { ...place, distance: Math.round(distance * 10) / 10 };
+  });
+
+  res.json({ ...data, results });
 });
 
 app.get("/placedetails", async (req, res) => {
