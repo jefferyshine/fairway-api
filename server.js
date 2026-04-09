@@ -16,7 +16,7 @@ app.get("/geocode", async (req, res) => {
 
 app.get("/nearbysearch", async (req, res) => {
   const { lat, lng, radius, keyword } = req.query;
-  const params = new URLSearchParams({ location: `${lat},${lng}`, radius: radius || "50000", type: "golf_course", key: KEY, ...(keyword ? { keyword } : {}) });
+  const params = new URLSearchParams({ location: `${lat},${lng}`, radius: radius || "50000", type: "golf_course", keyword: keyword || "golf course", key: KEY });
   const url = `https://maps.googleapis.com/maps/api/place/nearbysearch/json?${params}`;
   const r = await fetch(url);
   res.json(await r.json());
